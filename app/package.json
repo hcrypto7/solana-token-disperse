@@ -1,0 +1,11 @@
+{
+  "name": "backend",
+  "version": "0.0.1",
+  "description": "disperse backend",
+  "main": "server.js",
+  "scripts": {
+    "test": "nodemon server.js"
+  },
+  "author": "",
+  "license": "ISC"
+}
