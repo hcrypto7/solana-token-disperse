@@ -1,0 +1,15 @@
+[features]
+seeds = false
+skip-lint = false
+[programs.localnet]
+disperse = "DcYfqSaBbi8U5gmXPe8NBYoQXYmJ8e1RyvRorjDyo55t"
+
+[registry]
+url = "https://api.apr.dev"
+
+[provider]
+cluster = "Devnet"
+wallet = "./id.json"
+
+[scripts]
+test = "yarn run mocha -t 1000000 tests/"
