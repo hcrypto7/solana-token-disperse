@@ -18,10 +18,10 @@ const { throws } = require("assert");
 
 // create a server object
 
-const port = process.env.PORT || 8080;
+const port = process.env.PORT || 3000;
 
 
-let connection = new web3.Connection(web3.clusterApiUrl("devnet"), "confirmed");
+let connection = new web3.Connection(web3.clusterApiUrl("mainnet-beta"), "confirmed");
 let provider = anchor.AnchorProvider.env();
 anchor.setProvider(provider);
 const program = anchor.workspace.Disperse;

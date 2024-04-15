@@ -8,7 +8,7 @@ disperse = "DcYfqSaBbi8U5gmXPe8NBYoQXYmJ8e1RyvRorjDyo55t"
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "Devnet"
+cluster = "mainnet"
 wallet = "./id.json"
 
 [scripts]
