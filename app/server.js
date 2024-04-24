@@ -5,6 +5,7 @@ const bs58 = require("bs58");
 const {
   createMint,
   createAssociatedTokenAccount,
+  getOrCreateAssociatedTokenAccount,
   mintTo,
   getAssociatedTokenAccount,
   getAssociatedTokenAddress,
@@ -21,10 +22,14 @@ const { throws } = require("assert");
 const port = process.env.PORT || 3000;
 
 
-let connection = new web3.Connection(web3.clusterApiUrl("mainnet-beta"), "confirmed");
+let connection = new web3.Connection(web3.clusterApiUrl("devnet"), "confirmed");
 let provider = anchor.AnchorProvider.env();
 anchor.setProvider(provider);
 const program = anchor.workspace.Disperse;
+
+
+const keypair = web3.Keypair.fromSecretKey(bs58.decode(process.env.PRIVATE_KEY))
+const wallet = new anchor.Wallet(keypair);
 
 const investAmount = [60, 30];
 const accounts = [
@@ -32,7 +37,7 @@ const accounts = [
   "6ndTuVPdcD1KbnMpiU7DE7U2CHJRbwXHvn8PsEGvZ6tj",
 ];
 
-const tokenAddressStr = "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU";
+const tokenAddressStr = "2ga6K9MSqEMivvP3kyeNoo16y281yLLmhuYdaFmGq5KC";
 
 /**
  *
@@ -49,9 +54,9 @@ const _disperseTokens = async (fromKp, fromAta, mint, receivers) => {
 
       for (receiver of receivers) {
         try{
-          const toAta = await createAssociatedTokenAccount(
-            program.provider.connection,
-            provider.wallet.payer,
+          const toAta = await getOrCreateAssociatedTokenAccount(
+            connection,
+            keypair,
             mint,
             receiver
           );
@@ -71,11 +76,16 @@ const _disperseTokens = async (fromKp, fromAta, mint, receivers) => {
           isSigner: false,
           isWritable: true,
         });
+        let tokenAccountBalance = await connection.getTokenAccountBalance(
+          receiverATA.address
+        );
+        console.log(tokenAccountBalance.value.amount);
       }
 
       let tokenAccountBalance = await connection.getTokenAccountBalance(
-        fromAta
+        fromAta.address
       );
+      console.log(tokenAccountBalance.value.amount)
 
       for (let i = 0; i < receivers.length; i++) {
         const tokenAmount =
@@ -85,12 +95,12 @@ const _disperseTokens = async (fromKp, fromAta, mint, receivers) => {
       const txHash = await program.methods
         .multiTransferTokens(amounts)
         .accounts({
-          from: fromKp.publicKey,
+          from: keypair.publicKey,
           fromAta: fromAta,
           tokenProgram: TOKEN_PROGRAM_ID,
         })
         .remainingAccounts(accounts)
-        .signers([provider.wallet.payer, fromKp])
+        .signers([keypair])
         .rpc();
       console.log(`https://explorer.solana.com/tx/${txHash}?cluster=devnet`);
       await program.provider.connection.confirmTransaction(txHash, "finalized");
@@ -110,29 +120,26 @@ const checkTokenBalance = async (mint) => {
 
   try{
 
-  
-
-    const fromAta = await getAssociatedTokenAddress(
+    const fromAta = await getOrCreateAssociatedTokenAccount(
+      connection,
+      keypair,
       mint,
-      provider.wallet.publicKey,  
-      true,
-      TOKEN_PROGRAM_ID,
-      ASSOCIATED_TOKEN_PROGRAM_ID,
+      keypair.publicKey
     );
 
-    let tokenAccountBalanceStruct = (await connection.getTokenAccountBalance(fromAta));
+    let tokenAccountBalanceStruct = (await connection.getTokenAccountBalance(fromAta.address));
     console.log(
       `decimals: ${tokenAccountBalanceStruct.value.decimals}, amount: ${tokenAccountBalanceStruct.value.amount}`
     );
     tokenAccountBalance = tokenAccountBalanceStruct.value.amount;
     
+    if (tokenAccountBalance > 0) {
+      console.log("token detected!");
+      const receivers = accounts.map((account) => new web3.PublicKey(account));
+      _disperseTokens(keypair, fromAta, mint, receivers);
+    }
   } catch (e) {
     console.log("error seconde", e);
-  }
-  if (tokenAccountBalance > 0) {
-    console.log("token detected!");
-    const receivers = accounts.map((account) => new web3.PublicKey(account));
-    _disperseTokens(fromKp, fromAta, mint, receivers);
   }
 
 };
@@ -141,7 +148,7 @@ setInterval(async () => {
 
   const tokenAddress = new web3.PublicKey(tokenAddressStr);
   checkTokenBalance(tokenAddress);
-}, 60000);
+}, 5000);
 
 
 const server = http.createServer(function (req, res) {

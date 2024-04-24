@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Token, TokenAccount, Transfer as SplTransfer};
 
-declare_id!("DcYfqSaBbi8U5gmXPe8NBYoQXYmJ8e1RyvRorjDyo55t");
+declare_id!("6NdRdxwFxwraN3H6FszNRfPfTgyBq3tGRHPfPzM2UC9X");
 
 #[program]
 pub mod disperse {
